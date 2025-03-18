@@ -1,0 +1,5 @@
+﻿  Contest7.cpp
+D:\Programming C++\Contest\Contest7\Contest7.cpp(10,25): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Contest\Contest7\Contest7.cpp(11,28): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Contest\Contest7\Contest7.cpp(33,57): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+  Contest7.vcxproj -> D:\Programming C++\Contest\x64\Debug\Contest7.exe

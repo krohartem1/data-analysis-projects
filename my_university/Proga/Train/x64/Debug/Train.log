@@ -1,0 +1,4 @@
+﻿  Sol3.cpp
+D:\Programming C++\Proga\Train\Sol3.cpp(18,27): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Proga\Train\Sol3.cpp(27,27): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+  Train.vcxproj -> D:\Programming C++\Proga\x64\Debug\Train.exe

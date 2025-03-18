@@ -1,0 +1,7 @@
+﻿  Task5_palindrom.cpp
+D:\Programming C++\Proga\Hash_string\Task5_palindrom.cpp(54,21): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Proga\Hash_string\Task5_palindrom.cpp(55,19): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Proga\Hash_string\Task5_palindrom.cpp(56,46): warning C4244: аргумент: преобразование "__int64" в "int", возможна потеря данных
+D:\Programming C++\Proga\Hash_string\Task5_palindrom.cpp(61,57): warning C4244: аргумент: преобразование "__int64" в "int", возможна потеря данных
+D:\Programming C++\Proga\Hash_string\Task5_palindrom.cpp(61,106): warning C4244: аргумент: преобразование "__int64" в "int", возможна потеря данных
+  Hash_string.vcxproj -> D:\Programming C++\Proga\x64\Debug\Hash_string.exe

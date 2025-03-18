@@ -1,0 +1,7 @@
+﻿  Task1.cpp
+  Task3.cpp
+D:\Programming C++\Proga\Contest_final\Task3.cpp(5,21): warning C4244: инициализация: преобразование "double" в "int", возможна потеря данных
+D:\Programming C++\Proga\Contest_final\Task3.cpp(6,22): warning C4244: инициализация: преобразование "double" в "int", возможна потеря данных
+  Task4.cpp
+  Создание кода...
+  Contest_final.vcxproj -> D:\Programming C++\Proga\x64\Debug\Contest_final.exe

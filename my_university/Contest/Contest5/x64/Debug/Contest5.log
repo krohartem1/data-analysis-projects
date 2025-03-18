@@ -1,0 +1,3 @@
+﻿  Contest5.cpp
+D:\Programming C++\Contest\Contest5\Contest5.cpp(18,46): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+  Contest5.vcxproj -> D:\Programming C++\Contest\x64\Debug\Contest5.exe

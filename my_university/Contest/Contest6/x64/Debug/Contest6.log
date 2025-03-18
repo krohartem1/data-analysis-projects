@@ -1,0 +1,12 @@
+﻿  Contest6.cpp
+D:\Programming C++\Contest\Contest6\Contest6.cpp(21,20): warning C4244: =: преобразование "_Ty" в "int", возможна потеря данных
+          with
+          [
+              _Ty=uint64_t
+          ]
+D:\Programming C++\Contest\Contest6\Contest6.cpp(27,27): warning C4244: +=: преобразование "_Ty" в "int", возможна потеря данных
+          with
+          [
+              _Ty=uint64_t
+          ]
+  Contest6.vcxproj -> D:\Programming C++\Contest\x64\Debug\Contest6.exe

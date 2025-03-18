@@ -1,0 +1,3 @@
+﻿  Task4_radix_sort.cpp
+D:\Programming C++\Proga\Sorting\Task4_radix_sort.cpp(47,24): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+  Sorting.vcxproj -> D:\Programming C++\Proga\x64\Debug\Sorting.exe

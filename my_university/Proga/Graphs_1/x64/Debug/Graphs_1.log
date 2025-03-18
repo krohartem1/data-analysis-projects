@@ -1,0 +1,27 @@
+﻿  Task5_on_a_sleigh.cpp
+D:\Programming C++\Proga\Graphs_1\Task5_on_a_sleigh.cpp(60,20): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+D:\Programming C++\Proga\Graphs_1\Task5_on_a_sleigh.cpp(81,11): warning C4267: =: преобразование из "size_t" в "int"; возможна потеря данных
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244: инициализация: преобразование "_Ty" в "_Ty1", возможна потеря данных
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         with
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:             _Ty=double
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         and
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         [
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:             _Ty1=int
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16): warning C4244:         ]
+  (компиляция исходного файла "Task5_on_a_sleigh.cpp")
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.38.33130\include\utility(250,16):
+  контекст создания экземпляра шаблона (сначала самый старый)
+  	D:\Programming C++\Proga\Graphs_1\Task5_on_a_sleigh.cpp(84,13):
+  	выполняется компиляция ссылки на экземпляр шаблон функции "std::pair<int,int>::pair<_Ty&,int&,0>(_Other1,_Other2) noexcept"
+          with
+          [
+              _Ty=double,
+              _Other1=double &,
+              _Other2=int &
+          ]
+  		D:\Programming C++\Proga\Graphs_1\Task5_on_a_sleigh.cpp(84,12):
+  		см. первую ссылку на "std::pair<int,int>::pair" в "algorithm_Dijkstra"
+  
+  Graphs_1.vcxproj -> D:\Programming C++\Proga\x64\Debug\Graphs_1.exe
