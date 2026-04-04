@@ -1,0 +1,105 @@
+//                THIS IS AN EXAMPLE OF A WZD-FILE OF INI-TYPE
+//
+//char-s '[' and ']' are reserved for sections and '=' for keys
+//and may not be used otherwise
+// check that latin characters are not substituted by cyrillic in keys
+// two slashes (//) define that it is the commentary until the end of the line
+
+[ini_state]  tim= 0.0       
+             tem= 400.0  // key tem= is obligatory;
+             // maximum increments of time, temperature, stress and strain on one step
+             // minimum increments are 5 times less
+             // these increments are not taken into account when 
+             // 1) ultrasound is applied;
+             // 2) for vibrations;
+             // 3) k_step= number_of_steps_on_etap  is directly specified
+             tim_incr= 1.0  tem_incr= 1.0  s_incr=1.0  e_incr=0.1 //(pct)
+             faz_incr=0.02 //(not pct)
+             print_na_ekran=1  //1- to print the results of each step to the screen
+             pause_factor=0   //determines time to wait after messages
+                              //-1 - pause until user decides ; 0 - no delay(default)
+//defaults: tim=0.0
+//          tim_incr= 10.0    tem_incr= 1.0
+//          s_incr=1.0        e_incr=1.0e-4
+//          faz_incr=0.02     print_na_ekran=1
+//          pause_factor=0   //no delay(default)
+
+[etap 1] htim=10.0  hg32=2.0
+
+         ultrasound33 = 1          //ultrasound is on
+         sig_amplitude_us33 = 20.0 //(MPa) sig33 amplitude of ultrasound in MPa
+         eps_amplitude_us33 = 0.01 //(pct) eps33 amplitude of ultrasound in pct
+         freq_us33   = 22e3        //frequency in Hz
+         s_incr_us   = 10.0        //(MPa) stress increment for ultrasound(default is 5 MPa)
+         e_incr_us   = 0.01        //(pct) strain increment for ultrasound(default is 0.01%)
+
+	//List of admissible_keys and admissible values:
+
+//General rule: first letter h - means that it is the increment
+//              first letter d -  -- "" --  "" -- time derivative
+
+//tim=  htim=	tem=	htem=	dtem=  press=  hpress=   dpress=
+//s33=  hs33=   ds33=   s32=	hs32=  ds32=    
+//e33=  he33=	de33=   g32=	hg32=  dg32=   zhest33=  zhest32=
+//fluence=  hfluence=
+//k_step= number_of_steps_on_etap (not taken into account for vibration tasks)
+//k_print= number_of_printings //default is k_print=0 : one print/second
+//ultrasound33=(0/1) ultrasound33=1 means that an additional sig33(t) is superimposed
+//vibr32=(0/1)
+//isolation32=(0/1)  isolation32=1 may be only if vibr32=1
+//zhest33=incr.sig33/incr.eps33 (in MPa)
+//zhest32=incr.tau32/incr.gam32 (in MPa) !Note that incr.of gamma32 and not of eps32
+
+
+//If there is no keys tem= , htem=  or dtem=  it is assumed that temperature 
+//is constant thus the default key is htem=0.0
+
+//Other defaults for etap are:
+//htim=100.0	htem=0.0	hs33=0.0   hs32=0.0	hpress=0.0
+//hfluence=0.0	ultrasound33=0	vibr32=0     isolation32=0
+// -hpress will be added to all diagonal components of stress tensor
+//k_step has the biggest value of all that satisfy the conditions:
+//increments of tem, stress, strain are <= than defined in section [ini_state]
+//but not less than 50
+
+//Example of cyclic loading (etaps 2 and 3 will be repeated)
+//in this example temperature 10 times will be changed to 270K, then to 400K, etc. 
+
+[cycle 1] k_cycle= 10  //key k_cycle= is the only one that is admissible 
+                                             // (max = 2147483647)
+
+  [etap 2] tem= 270.0
+ 
+  [etap 3] tem= 400.0
+
+[endcycle 1]
+
+//Example of etap with vibrations
+
+[etap 4] vibr32=1       //vibrations are simulated (k_step will not be accounted)
+         htim=100       //vibrations will last 100 seconds 
+         htim_vibr=1e-4 //increment of time on one step. Default is 1e-4
+         control=1      //control == 1/0 will control be or not. Default is 0
+    
+      //These keys are needed for controlled vibrations
+
+         wait_mode= seconds //tim_wait is in seconds. Other possible choice is:
+       //wait_mode= fractions // tim_wait is in fractions of previous vibr.period
+         tim_wait=2         //delay time (in seconds or in fractions of previous vibr.period)
+         tem_peaks_mode= equal //all tem_peak values are equal 
+       //tem_peaks_mode= tem_peak.d - name of file with tem_peak values
+         heatnum=10      
+         tim_heat=0.1  
+         tem_fon=293  
+         tem_peak=420
+      impulse_shape= exp1 //one exponent; other values are  exp2, exp3, calculated
+      //impulse_shape= exp2
+      //impulse_shape= exp3
+      //impulse_shape= calculated
+      cool_exp_A=5   //tau in exp(-t/tau), for austenite       (tau is in seconds)
+      cool_exp_M=10  //     - " -        , for martensite      (     - " -       )
+      cool_exp_AM=12 //     - " -        , for two-phase state (     - " -       )
+
+      excitation=   trig_polynom
+      //excitation= quake_record
+      //excitation= no_excitation

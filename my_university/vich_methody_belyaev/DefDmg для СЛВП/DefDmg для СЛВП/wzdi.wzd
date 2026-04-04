@@ -1,0 +1,20 @@
+//      
+
+[ini_state]  tim= 0.0       tem= 400.0     pause_factor= 0 
+             tim_incr= 1.0  tem_incr= 1.0  s_incr=10.0  e_incr=5.0e-1
+
+
+	[etap 1]  htim=100.0		s33=100
+	[etap 2]  htim=100.0		tem=300	
+	[etap 2]  htim=100.0		tem=400	
+  //[etap 2]  htim=100.0		tem=300	
+  //[etap 2]  htim=100.0		tem=500	
+  //[etap 1]  htim=100.0		e33=8	
+  //[etap 1]  htim=100.0		s33=0	
+  //[etap 2]  htim=100.0		tem=500 zhest33=10000
+
+  //[etap 2]  htim=100.0		s33=500
+//[etap 3]  htim=100.0		s33=0	
+ // [etap 3]  htim=100.0		tem=500
+
+
