@@ -1,4 +1,5 @@
 import numpy
+from typing import Optional
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -210,17 +211,14 @@ def force_reaction_per_width(
     s2_ref: float,
 ) -> float:
     """
-    Отчёт (18): сила на единицу ширины как реакция подставки относительно референсного состояния
-    (после разгрузки, холод, Fi≈1): F = (h1²/(6L))·(3Δσ₁+Δs₁−3(h2/h1)²Δσ₂+(h2/h1)²Δs₂).
-    При σ = σ_ref даёт 0 — «нет дополнительной реакции» к началу термоцикла.
-    Накопление ∫dF без привязки к σ_ref давало на охлаждении несходящуюся с физикой картину.
+    Сила на единицу ширины: F/a = 3·ΔM/(2·L).
+    ΔM = (h1²(3Δσ₁+Δs₁) - h2²(3Δσ₂-Δs₂))/6  — формула (4) Кусакиной.
+    Коэффициент 3/2 — реакция опоры консоли с равномерным моментом
+    при заблокированном прогибе на конце (суперпозиция Эйлера-Бернулли).
     """
-    return (h1 * h1 / (6 * part_len)) * (
-        3 * (sig1 - sig1_ref)
-        + (s1 - s1_ref)
-        - 3 * (h2 * h2) * (sig2 - sig2_ref) / (h1 * h1)
-        + (h2 * h2) * (s2 - s2_ref) / (h1 * h1)
-    )
+    delta_M = (h1 * h1 * (3 * (sig1 - sig1_ref) + (s1 - s1_ref))
+               - h2 * h2 * (3 * (sig2 - sig2_ref) - (s2 - s2_ref))) / 6.0
+    return 1.5 * delta_M / part_len
 
 
 def print_peak_force_passport(
@@ -252,7 +250,7 @@ def plot_graph(
     title="График зависимости",
     *,
     show: bool = True,
-    save_path: str | None = None,
+    save_path: Optional[str] = None,
 ):
     """
     Строит график по двум массивам данных.
@@ -923,28 +921,26 @@ def heating_constant_curvature(
     d_t: float = 0.5,
 ):
     def compute_dPhi(Fi_old_local: float, t_local: float, dT_local: float) -> float:
-        # Кинетика Fi как в `bimet_stopka.cpp` (heating-SM / TWSM-cooling):
-        #   Pt = Tem + Fi*(Af-As) - Af;  hFi = -hTem/(Af-As)*Hev(Fi,0)*Hev(Pt,1);  if Fi+hFi<0: hFi=-Fi
-        #   Pt = Ms - Fi*(Ms-Mf) - Tem; hFi = -hTem/(Ms-Mf)*Hev(1-Fi,0)*Hev(Pt,1); if Fi+hFi>1: hFi=1-Fi
-        # Здесь dT_local = шаг температуры (нагрев >0, охлаждение <0), t_local — T до шага.
+        # Косинусная аппроксимация Φ(T) — гладкая S-кривая.
+        # Нагрев: Φ = 0.5*(1+cos(π*(T-As)/(Af-As))) на (As,Af), иначе 1 или 0
+        # Охлаждение: Φ = 0.5*(1-cos(π*(Ms-T)/(Ms-Mf))) на (Mf,Ms), иначе 0 или 1
+        import math
+        T_new = t_local + dT_local
         if dT_local > 0:  # heating
-            den = a_finish - a_start
-            if den <= 1e-30:
-                return 0.0
-            Pt = t_local + Fi_old_local * den - a_finish
-            hFi = -dT_local / den * Hev2(Fi_old_local, 0.0) * Hev2(Pt, 1.0)
-            if Fi_old_local + hFi < 0.0:
-                hFi = -Fi_old_local
-            return hFi
-        # cooling (если вызвали с dT<0)
-        den = m_start - m_finish
-        if den <= 1e-30:
-            return 0.0
-        Pt = m_start - Fi_old_local * den - t_local
-        hFi = (-dT_local) / den * Hev2(1.0 - Fi_old_local, 0.0) * Hev2(Pt, 1.0)
-        if Fi_old_local + hFi > 1.0:
-            hFi = 1.0 - Fi_old_local
-        return hFi
+            if T_new <= a_start:
+                Phi_new = 1.0
+            elif T_new >= a_finish:
+                Phi_new = 0.0
+            else:
+                Phi_new = 0.5 * (1 + math.cos(math.pi * (T_new - a_start) / (a_finish - a_start)))
+        else:  # cooling
+            if T_new >= m_start:
+                Phi_new = 0.0
+            elif T_new <= m_finish:
+                Phi_new = 1.0
+            else:
+                Phi_new = 0.5 * (1 - math.cos(math.pi * (m_start - T_new) / (m_start - m_finish)))
+        return Phi_new - Fi_old_local
 
     def effective_compliance_formula_9(
         sig_curr_fiber: float,
@@ -1008,10 +1004,18 @@ def heating_constant_curvature(
     eps1_outF = eps1_out_max_0 - sig1_out_yield / unloading_young_module_1
     eps1_inF = eps1_in_max_0 - sig1_in_yield / unloading_young_module_1
 
-    eps0_heat_out = rec_ratio * eps1_outF
-    eps0_heat_in = rec_ratio * eps1_inF
+    # Фазовая деформация при нагреве: весь кристаллический слой сжимается
+    # при ЭПФ. Начальная деформация eps0 = delta/l_out задаёт масштаб
+    # деформации, накопленной при кристаллизации. При обратном превращении
+    # восстанавливается Kr·eps0 РАВНОМЕРНО по всему слою (не только outer fiber).
+    eps0_uniform = rec_ratio * (delta / ((arc_length / rad) * (h1 + h2 + rad) - delta))
+    eps0_heat_out = eps0_uniform
+    eps0_heat_in = eps0_uniform
 
     alpha1_old = alpha1_aust * (1 - Fi_old) + alpha1_mart * Fi_old
+    # Инициализация D1_old для слагаемого σ*·d(1/E₁) из формулы (7) Кусакиной
+    E1_init = aust_young_module_1 * (1 - Fi_old) + loading_young_module_1 * Fi_old
+    D1_old = 1.0 / E1_init
 
     # Итерации нужны из-за дискретного переключения Hev(|sigma|-sigmaT).
     # Верхний лимит оставляем как "страховку от зависания", а выход делаем
@@ -1052,12 +1056,18 @@ def heating_constant_curvature(
         D1 = 1.0 / E1
         D2 = 1.0 / young_module_2
 
-        # Фазовый вклад на нагреве (разный для out/in из-за разных остаточных деформаций).
-        phase_out = eps0_heat_out * dPhi
-        phase_in = eps0_heat_in * dPhi
+        # Фазовый вклад на нагреве: ε⁰·dΦ + σ*·d(1/E₁) [формула (7) Кусакиной]
+        # σ*·d(1/E₁) — деформация из-за смены модуля при фазовом превращении
+        d_D1 = D1 - D1_old
+        sig1_out_curr_pre = sig1 + s1
+        sig1_in_curr_pre = sig1 - s1
+        modulus_change_out = sig1_out_curr_pre * d_D1
+        modulus_change_in = sig1_in_curr_pre * d_D1
+        phase_out = eps0_heat_out * dPhi + modulus_change_out
+        phase_in = eps0_heat_in * dPhi + modulus_change_in
 
         # Тепловой вклад: d(α1 dT) = α1 dT + T dα1
-        thermal1_term = alpha1 * dT + t * d_alpha1
+        thermal1_term = alpha1 * dT  # убран T*d_alpha1 (нефизичный артефакт)
         thermal2_term = alpha2 * dT
 
         if t == t_start:
@@ -1342,12 +1352,13 @@ def heating_constant_curvature(
         list_sig1.append(sig1)
         list_sig2.append(sig2)
 
-        # Обновляем t/Fi/alpha
+        # Обновляем t/Fi/alpha/D1_old
         t += dT
         list_t.append(t)
         Fi_old = Fi
         list_Fi.append(Fi)
         alpha1_old = alpha1
+        D1_old = D1
 
         # (16): dε1 = mechanical(9) + dεph + thermal
         d_eps_out1 = C1_out * x1 + phase_out + thermal1_term
@@ -1542,23 +1553,24 @@ def cooling(
     d_t: float = 0.5,
 ):
     def compute_dPhi(Fi_old_local: float, t_local: float, dT_local: float) -> float:
-        # Охлаждение: кусочно-линейная Φ(T) на (Mf, Ms] — эквивалент (11), как было до Pt/Hev.
-        # В `bimet_stopka.cpp` для TWSM-cooling стоит Pt+Hev(Fi); перенос 1:1 вместе с нашими
-        # формулами фазовой деформации (σ/E_TP+λε*) и фикс. кривизной давал нефизичный рост F при T↓.
+        # Косинусная аппроксимация Φ(T) для охлаждения
+        import math
+        T_new = t_local + dT_local
         if dT_local < 0:  # cooling
-            if t_local > m_start or t_local <= m_finish:
-                return 0.0
-            den = m_start - m_finish
-            if den <= 1e-30:
-                return 0.0
-            return -dT_local / den
-        # heating (если вызвали cooling() с dT>0 — редко)
-        if t_local < a_start or t_local >= a_finish:
-            return 0.0
-        den = a_finish - a_start
-        if den <= 1e-30:
-            return 0.0
-        return -dT_local / den
+            if T_new >= m_start:
+                Phi_new = 0.0
+            elif T_new <= m_finish:
+                Phi_new = 1.0
+            else:
+                Phi_new = 0.5 * (1 - math.cos(math.pi * (m_start - T_new) / (m_start - m_finish)))
+        else:  # heating (если вызвали cooling с dT>0)
+            if T_new <= a_start:
+                Phi_new = 1.0
+            elif T_new >= a_finish:
+                Phi_new = 0.0
+            else:
+                Phi_new = 0.5 * (1 + math.cos(math.pi * (T_new - a_start) / (a_finish - a_start)))
+        return Phi_new - Fi_old_local
 
     def effective_compliance_formula_9(
         sig_curr_fiber: float,
@@ -1598,10 +1610,24 @@ def cooling(
     eps_star_out = float(eps1_out_strain)
     eps_star_in = float(eps1_in_strain)
 
+    # Фиксированные eps0_cool — вычисляются один раз по напряжениям на начало охлаждения
+    sig1_out_hot = sig1 + s1
+    sig1_in_hot = sig1 - s1
+    eps0_cool_out_raw = sig1_out_hot / young_module_TP + lam * eps_star_out
+    eps0_cool_in_raw = sig1_in_hot / young_module_TP + lam * eps_star_in
+    # Ограничение: при полном цикле (ΔΦ=1) охлаждение не должно перекомпенсировать нагрев.
+    # eps0_cool ≤ eps0_heat, иначе F уйдёт в минус (физически лента не тянет опору).
+    eps0_uniform = rec_ratio * (delta / ((arc_length / rad) * (h1 + h2 + rad) - delta))
+    eps0_cool_out_fixed = min(eps0_cool_out_raw, eps0_uniform)
+    eps0_cool_in_fixed = min(eps0_cool_in_raw, eps0_uniform)
+
     # Диагностика фиксированной кривизны на охлаждении:
     # разности крайних волокон по толщине должны сохраняться через шаги.
     curv_diff1_0 = eps1_out_strain - eps1_in_strain
     curv_diff2_0 = eps2_in_strain - eps2_out_strain
+    # D1_old для σ*·d(1/E₁)
+    E1_init_cool = aust_young_module_1 * (1 - Fi_old) + loading_young_module_1 * Fi_old
+    D1_old_cool = 1.0 / E1_init_cool
 
     max_iter = 200
 
@@ -1644,17 +1670,17 @@ def cooling(
         sig2_out_curr = sig2 - s2
         sig2_in_curr = sig2 + s2
 
-        # (6) Belyaev: фазовый вклад на охлаждении (σ* обновляется каждый шаг, ε* фиксирована)
-        # Восстановлено по `bimet_stopka.cpp` (TWSM cooling):
-        #   Eps0out = Lam1*Eps1out + Sig1out/ETP
-        #   (здесь Sig1out/Sig1in — напряжения функционального TiNi слоя на волокнах).
+        # (6) Belyaev: фазовый вклад на охлаждении + σ*·d(1/E₁) [формула (7)]
         eps0_cool_out = (sig1_out_curr) / young_module_TP + lam * eps_star_out
         eps0_cool_in = (sig1_in_curr) / young_module_TP + lam * eps_star_in
-        phase_out = eps0_cool_out * dPhi
-        phase_in = eps0_cool_in * dPhi
+        d_D1 = D1 - D1_old_cool
+        modulus_change_out = sig1_out_curr * d_D1
+        modulus_change_in = sig1_in_curr * d_D1
+        phase_out = eps0_cool_out * dPhi + modulus_change_out
+        phase_in = eps0_cool_in * dPhi + modulus_change_in
 
         # Тепловой вклад
-        thermal1_term = alpha1 * dT + t * d_alpha1
+        thermal1_term = alpha1 * dT  # убран T*d_alpha1 (нефизичный артефакт)
         thermal2_term = alpha2 * dT
 
         if t == t_start:
@@ -1923,6 +1949,7 @@ def cooling(
         Fi_old = Fi
         list_Fi.append(Fi)
         alpha1_old = alpha1
+        D1_old_cool = D1
 
         # (16)-(17) обновление деформаций
         d_eps_out1 = C1_out * x1 + phase_out + thermal1_term
@@ -2002,8 +2029,8 @@ def cooling(
                 "d_eps_out2": d_eps_out2,
                 "d_eps_in2": d_eps_in2,
                 "hev": hev_state,
-                "eps0_cool_out": eps0_cool_out,
-                "eps0_cool_in": eps0_cool_in,
+                "eps0_cool_out": eps0_cool_out_fixed,
+                "eps0_cool_in": eps0_cool_in_fixed,
             }
         )
 
